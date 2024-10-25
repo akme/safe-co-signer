@@ -1,6 +1,22 @@
 import { createSafeClient } from "@safe-global/sdk-starter-kit";
+import { ethers } from "ethers";
 
 import { pino } from "pino";
+
+// ERC-20 Transfer ABI
+const ERC20_TRANSFER_ABI = ["function transfer(address to, uint256 value)"];
+
+// Function to decode transaction data
+function decodeTransactionData(data) {
+  const iface = new ethers.Interface(ERC20_TRANSFER_ABI);
+  try {
+    const decoded = iface.parseTransaction({ data });
+    return decoded.args.to;
+  } catch (error) {
+    //   logger.error("Failed to decode transaction data: " + error.message);
+    return null;
+  }
+}
 
 // Create a logging instance
 const logger = pino({
@@ -37,10 +53,17 @@ for (const transaction of sortedTransactions) {
       " nonce: " +
       transaction.nonce
   );
+
+  // Decode the transaction data to get the destination address
+  const destinationAddress = decodeTransactionData(transaction.data);
   if (
     !WHITELIST.map((address) => address.toLowerCase()).includes(
       transaction.to.toLowerCase()
-    )
+    ) &&
+    (!destinationAddress ||
+      !WHITELIST.map((address) => address.toLowerCase()).includes(
+        destinationAddress.toLowerCase()
+      ))
   ) {
     logger.info(
       "Skipping transaction " +
@@ -71,10 +94,12 @@ for (const transaction of sortedTransactions) {
         transaction.nonce +
         " status: " +
         error.shortMessage +
+        " " +
+        error.details +
         "\nSuggestion: check that transaction with nonce " +
         (transaction.nonce - 1) +
-        " is confirmed and mined."
+        " is confirmed and mined or if you have enough funds to pay for gas. Probably trasaction was confirmed but not submitted to the network."
     );
-    break;
+    continue;
   }
 }
