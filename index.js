@@ -68,8 +68,7 @@ for (const transaction of sortedTransactions) {
     logger.info(
       "Skipping transaction " +
         transaction.safeTxHash +
-        " for non-whitelisted address: " +
-        transaction.to
+        " for non-whitelisted address"
     );
     continue;
   }
@@ -77,10 +76,9 @@ for (const transaction of sortedTransactions) {
     logger.info(
       "Confirming transaction " +
         transaction.safeTxHash +
-        " for whitelisted address: " +
-        transaction.to +
         " nonce: " +
-        transaction.nonce
+        transaction.nonce +
+        " for a whitelisted address"
     );
     const txResult = await safeClient.confirm(transaction);
     logger.warn(
